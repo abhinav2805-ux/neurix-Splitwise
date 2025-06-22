@@ -253,3 +253,8 @@ def settle_up_group(group_id: int, db: Session = Depends(get_db)):
         db.add(split)
         db.commit()
     return {"message": "All settlements recorded as expenses. Balances should now be zero."}
+
+@router.get("/", response_model=List[GroupResponse])
+def list_groups(db: Session = Depends(get_db)):
+    groups = db.query(Group).all()
+    return groups
