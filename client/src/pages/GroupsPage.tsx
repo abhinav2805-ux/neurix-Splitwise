@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 type User = { id: number; name: string };
 type GroupType = { id: number; name: string; users: User[]; total_expenses?: number };
@@ -58,21 +58,6 @@ export default function GroupsPage() {
     } catch (err) {
       setError("Failed to create group");
       toast.error('Failed to create group');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteGroup = async (groupId: number, groupName: string) => {
-    if (!window.confirm(`Are you sure you want to delete group '${groupName}'? This cannot be undone.`)) return;
-    setLoading(true);
-    try {
-      await axios.delete(`${API_BASE}/groups/${groupId}`);
-      await fetchGroups();
-      toast.success(`Group '${groupName}' deleted!`);
-    } catch (err) {
-      setError("Failed to delete group");
-      toast.error('Failed to delete group');
     } finally {
       setLoading(false);
     }
@@ -152,15 +137,6 @@ export default function GroupsPage() {
                     </div>
                   )}
                 </div>
-                <button
-                  className="ml-4 px-2 py-1 rounded sci-fi-btn flex items-center gap-1"
-                  style={{ background: 'linear-gradient(90deg, #ff4d4f 0%, #7f00ff 100%)', boxShadow: '0 0 8px #ff4d4f, 0 0 2px #7f00ff' }}
-                  onClick={() => handleDeleteGroup(group.id, group.name)}
-                  disabled={loading}
-                  title="Delete group"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             ))}
           </div>

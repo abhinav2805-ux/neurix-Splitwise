@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from database import Base, engine
 from routers.user import router as user_router
 from routers.group import router as group_router
+from routers.chatbot import router as chatbot_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -21,6 +22,7 @@ Base.metadata.create_all(bind=engine)
 # Register routers
 app.include_router(user_router, prefix="/users", tags=["Users"])
 app.include_router(group_router, prefix="/groups", tags=["Groups"])
+app.include_router(chatbot_router, tags=["Chatbot"])
 
 @app.get("/")
 def root():

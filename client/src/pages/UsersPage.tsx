@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { UserPlus, Plus, AlertCircle, Trash2 } from 'lucide-react';
+import { UserPlus, Plus, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function UsersPage() {
   const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
@@ -34,21 +34,6 @@ export default function UsersPage() {
     } catch (err) {
       setError("Failed to create user");
       toast.error('Failed to create user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async (userId: number, userName: string) => {
-    if (!window.confirm(`Are you sure you want to delete user '${userName}'? This cannot be undone.`)) return;
-    setLoading(true);
-    try {
-      await axios.delete(`${API_BASE}/users/${userId}`);
-      await fetchUsers();
-      toast.success(`User '${userName}' deleted!`);
-    } catch (err) {
-      setError("Failed to delete user");
-      toast.error('Failed to delete user');
     } finally {
       setLoading(false);
     }
@@ -97,15 +82,6 @@ export default function UsersPage() {
                   <span className="font-medium">{user.name}</span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">ID: {user.id}</span>
                 </div>
-                <button
-                  className="ml-4 px-2 py-1 rounded sci-fi-btn flex items-center gap-1"
-                  style={{ background: 'linear-gradient(90deg, #ff4d4f 0%, #7f00ff 100%)', boxShadow: '0 0 8px #ff4d4f, 0 0 2px #7f00ff' }}
-                  onClick={() => handleDeleteUser(user.id, user.name)}
-                  disabled={loading}
-                  title="Delete user"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             ))}
           </div>

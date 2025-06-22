@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 type User = { id: number; name: string };
 type GroupType = { id: number; name: string; users: User[]; total_expenses?: number };

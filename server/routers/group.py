@@ -257,7 +257,15 @@ def settle_up_group(group_id: int, db: Session = Depends(get_db)):
 @router.get("/", response_model=List[GroupResponse])
 def list_groups(db: Session = Depends(get_db)):
     groups = db.query(Group).all()
-    return groups
+    return [
+        GroupResponse(
+            id=group.id,
+            name=group.name,
+            users=group.users,
+            total_expenses=sum(expense.amount for expense in group.expenses)
+        )
+        for group in groups
+    ]
 
 @router.delete("/{group_id}")
 def delete_group(group_id: int, db: Session = Depends(get_db)):
