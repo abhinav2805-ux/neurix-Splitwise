@@ -198,3 +198,58 @@ def get_group_settlements(group_id: int, db: Session = Depends(get_db)):
     return GroupSettlementsResponse(
         group_id=group.id, group_name=group.name, settlements=settlements
     )
+
+@router.post("/{group_id}/settleup")
+def settle_up_group(group_id: int, db: Session = Depends(get_db)):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    # Calculate settlements (reuse proportional logic)
+    balances = {}
+    for user in group.users:
+        paid_amount = sum(expense.amount for expense in group.expenses if expense.paid_by == user.id)
+        owed_amount = sum(split.amount for expense in group.expenses for split in expense.splits if split.user_id == user.id)
+        balance = paid_amount - owed_amount
+        if abs(balance) > 0.01:
+            balances[user] = balance
+
+    debtors = {user: -balance for user, balance in balances.items() if balance < 0}
+    creditors = {user: balance for user, balance in balances.items() if balance > 0}
+    total_positive = sum(creditors.values())
+    settlements = []
+    for debtor, debt in debtors.items():
+        for creditor, credit in creditors.items():
+            if total_positive > 0:
+                amount = round(debt * (credit / total_positive), 2)
+                if amount > 0.01:
+                    settlements.append((debtor, creditor, amount))
+
+    # For each settlement, create an expense
+    for debtor, creditor, amount in settlements:
+        expense = ExpenseCreate(
+            description=f"Settlement: {debtor.name} pays {creditor.name}",
+            amount=amount,
+            paid_by=debtor.id,
+            split_type=SplitType.PERCENTAGE,
+            splits=[SplitBase(user_id=creditor.id, amount=amount, percentage=100.0)]
+        )
+        db_expense = Expense(
+            description=expense.description,
+            amount=expense.amount,
+            paid_by=expense.paid_by,
+            group_id=group_id,
+            split_type=expense.split_type.value
+        )
+        db.add(db_expense)
+        db.commit()
+        db.refresh(db_expense)
+        split = Split(
+            expense_id=db_expense.id,
+            user_id=creditor.id,
+            amount=amount,
+            percentage=100.0
+        )
+        db.add(split)
+        db.commit()
+    return {"message": "All settlements recorded as expenses. Balances should now be zero."}
