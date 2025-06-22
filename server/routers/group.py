@@ -4,6 +4,20 @@ from database import get_db
 from models import Group, User, Expense, Split
 from schemas.group import GroupCreate, GroupResponse, GroupBalance, GroupBalancesResponse
 from schemas.expense import ExpenseCreate, ExpenseResponse, SplitBase, SplitType
+from pydantic import BaseModel
+from typing import List
+
+class SettlementTransaction(BaseModel):
+    from_user_id: int
+    from_user_name: str
+    to_user_id: int
+    to_user_name: str
+    amount: float
+
+class GroupSettlementsResponse(BaseModel):
+    group_id: int
+    group_name: str
+    settlements: List[SettlementTransaction]
 
 router = APIRouter()
 
@@ -48,7 +62,7 @@ def add_expense(group_id: int, expense: ExpenseCreate, db: Session = Depends(get
         for user_id in group_member_ids:
             split = Split(
                 user_id=user_id,
-                amount=split_amount if user_id != expense.paid_by else 0,
+                amount=split_amount,
                 percentage=100.0 / len(group_member_ids)
             )
             splits.append(split)
@@ -62,6 +76,7 @@ def add_expense(group_id: int, expense: ExpenseCreate, db: Session = Depends(get
             raise HTTPException(status_code=400, detail="Percentages must sum to 100")
         
         splits = []
+        provided_user_ids = set()
         for split_data in expense.splits:
             split = Split(
                 user_id=split_data.user_id,
@@ -69,6 +84,17 @@ def add_expense(group_id: int, expense: ExpenseCreate, db: Session = Depends(get
                 percentage=split_data.percentage
             )
             splits.append(split)
+            provided_user_ids.add(split_data.user_id)
+        # Auto-complete missing group members
+        group_member_ids = [user.id for user in group.users]
+        for user_id in group_member_ids:
+            if user_id not in provided_user_ids:
+                split = Split(
+                    user_id=user_id,
+                    amount=0.0,
+                    percentage=0.0
+                )
+                splits.append(split)
     
     db_expense = Expense(
         description=expense.description,
@@ -121,4 +147,54 @@ def get_group_balances(group_id: int, db: Session = Depends(get_db)):
     
     return GroupBalancesResponse(
         group_id=group.id, group_name=group.name, balances=balances
+    )
+
+@router.get("/{group_id}/settle", response_model=GroupSettlementsResponse)
+def get_group_settlements(group_id: int, db: Session = Depends(get_db)):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    balances = {}
+    for user in group.users:
+        paid_amount = sum(expense.amount for expense in group.expenses if expense.paid_by == user.id)
+        owed_amount = sum(split.amount for expense in group.expenses for split in expense.splits if split.user_id == user.id)
+        balance = paid_amount - owed_amount
+        if abs(balance) > 0.01:
+            balances[user] = balance
+
+    debtors = {user: -balance for user, balance in balances.items() if balance < 0}
+    creditors = {user: balance for user, balance in balances.items() if balance > 0}
+    
+    settlements = []
+    
+    debtor_items = list(debtors.items())
+    creditor_items = list(creditors.items())
+
+    i = 0
+    j = 0
+    while i < len(debtor_items) and j < len(creditor_items):
+        debtor, debt = debtor_items[i]
+        creditor, credit = creditor_items[j]
+
+        amount = min(debt, credit)
+
+        settlements.append(SettlementTransaction(
+            from_user_id=debtor.id,
+            from_user_name=debtor.name,
+            to_user_id=creditor.id,
+            to_user_name=creditor.name,
+            amount=amount
+        ))
+
+        debtor_items[i] = (debtor, debt - amount)
+        creditor_items[j] = (creditor, credit - amount)
+
+        if debtor_items[i][1] < 0.01:
+            i += 1
+        if creditor_items[j][1] < 0.01:
+            j += 1
+            
+    return GroupSettlementsResponse(
+        group_id=group.id, group_name=group.name, settlements=settlements
     )

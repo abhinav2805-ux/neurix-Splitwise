@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -28,6 +28,18 @@ class GroupBalancesResponse(BaseModel):
     group_id: int
     group_name: str
     balances: List[GroupBalance]
+
+class SettlementTransaction(BaseModel):
+    from_user_id: int
+    from_user_name: str
+    to_user_id: int
+    to_user_name: str
+    amount: float
+
+class GroupSettlementsResponse(BaseModel):
+    group_id: int
+    group_name: str
+    settlements: List[SettlementTransaction]
 
 # --- FIX: Import UserResponse at runtime before model_rebuild ---
 from .user import UserResponse
