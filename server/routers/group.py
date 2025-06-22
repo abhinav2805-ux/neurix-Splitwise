@@ -258,3 +258,19 @@ def settle_up_group(group_id: int, db: Session = Depends(get_db)):
 def list_groups(db: Session = Depends(get_db)):
     groups = db.query(Group).all()
     return groups
+
+@router.delete("/{group_id}")
+def delete_group(group_id: int, db: Session = Depends(get_db)):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    db.delete(group)
+    db.commit()
+    return {"message": "Group deleted"}
+
+@router.get("/{group_id}/expenses", response_model=List[ExpenseResponse])
+def get_group_expenses(group_id: int, db: Session = Depends(get_db)):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    return group.expenses
