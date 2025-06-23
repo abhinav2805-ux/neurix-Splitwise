@@ -1,7 +1,7 @@
 "use client"
 
 import React, { Suspense } from "react"
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from "react-router-dom"
 
 const UsersPage = React.lazy(() => import("./pages/UsersPage"))
 const GroupsPage = React.lazy(() => import("./pages/GroupsPage"))
@@ -23,36 +23,64 @@ export default function App() {
                   <p className="text-sm text-slate-600">Manage your shared expenses</p>
                 </div>
                 <nav className="flex gap-2">
-                  <Link
+                  <NavLink
                     to="/users"
-                    className="px-4 py-2 rounded-lg font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isActive
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                      }`
+                    }
                   >
                     Users
-                  </Link>
-                  <Link
+                  </NavLink>
+                  <NavLink
                     to="/groups"
-                    className="px-4 py-2 rounded-lg font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isActive
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                      }`
+                    }
                   >
                     Groups
-                  </Link>
-                  <Link
+                  </NavLink>
+                  <NavLink
                     to="/expenses"
-                    className="px-4 py-2 rounded-lg font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isActive
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                      }`
+                    }
                   >
                     Expenses
-                  </Link>
-                  <Link
+                  </NavLink>
+                  <NavLink
                     to="/balances"
-                    className="px-4 py-2 rounded-lg font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isActive
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                      }`
+                    }
                   >
                     Balances
-                  </Link>
-                  <Link
+                  </NavLink>
+                  <NavLink
                     to="/chatbot"
-                    className="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    className={({ isActive }) =>
+                      `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        isActive ? "bg-blue-700 text-white" : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`
+                    }
                   >
                     AI Assistant
-                  </Link>
+                  </NavLink>
                 </nav>
               </div>
             </div>
