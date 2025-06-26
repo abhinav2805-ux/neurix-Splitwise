@@ -5,6 +5,10 @@ Splitlyze is a full-stack, sci-fi themed web application designed to help users 
 This application is built with a modern technology stack, containerized with Docker for easy setup, and features a complete CI/CD pipeline for automated testing and deployment.
 
 ---
+##  System Design Architecture
+![System Design Architecture](systemSplitwise.png)
+
+---
 
 ## 🛠️ Technology Stack
 
